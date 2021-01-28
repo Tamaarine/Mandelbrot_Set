@@ -11,17 +11,22 @@ class MandelbrotSet:
         self.RE_END = 1
         self.IM_START = 1
         self.IM_END = -1
-        self.WIDTH = 1080
+        self.WIDTH = 1280
         self.HEIGHT = 720
-        self.MAX_ITERATION = 200
+        self.MAX_ITERATION = 70
         
         # We also init pygame here
         pygame.init()
+        pygame.display.set_caption('Mandelbrot Set')
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         
         # Set up some variables for the zoom in square that we are going to be using
-        self.ZOOMSQUARE_WIDTH = 100
-        self.ZOOMSQUARE_HEIGHT = 100
+        self.ZOOMSQUARE_WIDTH = 160
+        self.ZOOMSQUARE_HEIGHT = 90
+        
+        # Define variables for mouse's position
+        self.MOUSE_START = (0,0)
+        self.MOUSE_END = (0,0)
         
         
     def mandelbrot(self, c):
@@ -67,10 +72,18 @@ class MandelbrotSet:
                 # If the iteration is the MAX_ITERATION. Say 80, then iteration and MAX_ITERATION
                 # will cancel out. Making it 255 - 255 which equals to 0. And that color is black in RGB
                 # However, if the iteration is 0 meaning that it escaped immediately, then it will be white
-                color = 255 - int(iteration * 255 / self.MAX_ITERATION)
+                color = int(iteration * 255 / self.MAX_ITERATION)
+                
+                hue = int(iteration * 255 / self.MAX_ITERATION)
+                sat = 100
+                
+                col = pygame.Color(0,0,0)
+                col.hsva = (hue, sat, 100, 100)
+                
+                
                 
                 # Then we will draw using pygame
-                self.screen.set_at((x, y), (color, color, color))
+                self.screen.set_at((x, y), col)
                 
             # After drawing a row update it
             pygame.display.update()
@@ -103,6 +116,9 @@ if __name__ == "__main__":
     # Variable used to stop if the pygame program is exited
     running = True 
     
+    # Draw zooming rectangle
+    zoomin_rect = False
+    
     # We make our Mandelbrotset class object here
     mandelbrot_app = MandelbrotSet()
     
@@ -123,15 +139,22 @@ if __name__ == "__main__":
             # If the event is QUIT then we simply make the running false and stop the update
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                # If the application is clicked, update the variables
+            
+            if event.type == pygame.MOUSEMOTION:
+                mandelbrot_app.MOUSE_END = pygame.mouse.get_pos()
+            
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                # # If the application is clicked, update the variables
                 mandelbrot_app.update_self_variables()
                 
                 # Then we have to render the mandelbrot set again using the newly defined variable
                 rendering_thread = threading.Thread(target=mandelbrot_app.render_mandelbrot, daemon=True)
                 rendering_thread.start()
-        
-        pygame.display.update()
+                
+                # mandelbrot_app.MOUSE_START = pygame.mouse.get_pos()
+                # zoomin_rect = True
+            
+        pygame.display.flip()
     
     # If we are here then we will quit pygame
     pygame.quit()
